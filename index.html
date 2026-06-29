@@ -1,0 +1,274 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion Immobilière</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f4f4;
+    padding:20px;
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 0 10px rgba(0,0,0,.1);
+}
+
+h1{
+    text-align:center;
+}
+
+input{
+    padding:10px;
+    margin:5px;
+    width:200px;
+}
+
+button{
+    padding:10px;
+    margin:5px;
+    cursor:pointer;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+th,td{
+    border:1px solid #ddd;
+    padding:8px;
+    text-align:center;
+}
+
+th{
+    background:#007bff;
+    color:white;
+}
+
+.supprimer{
+    background:red;
+    color:white;
+    border:none;
+    padding:5px 10px;
+    cursor:pointer;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Gestion des Loyers</h1>
+
+<input type="text" id="nom" placeholder="Nom du client">
+<input type="text" id="tel" placeholder="Téléphone">
+<input type="number" id="loyer" placeholder="Loyer mensuel">
+
+<button onclick="ajouterClient()">Ajouter</button>
+<button onclick="exportPDF()">Exporter PDF</button>
+<button onclick="viderDonnees()">Vider les données</button>
+
+<table id="tableClients">
+
+<thead>
+<tr>
+<th>Client</th>
+<th>Téléphone</th>
+<th>Loyer</th>
+<th>Jan</th>
+<th>Fév</th>
+<th>Mar</th>
+<th>Avr</th>
+<th>Mai</th>
+<th>Juin</th>
+<th>Juil</th>
+<th>Août</th>
+<th>Sept</th>
+<th>Oct</th>
+<th>Nov</th>
+<th>Déc</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody>
+</tbody>
+
+</table>
+
+</div>
+
+<script>
+
+function ajouterClient(){
+
+    let nom = document.getElementById("nom").value;
+    let tel = document.getElementById("tel").value;
+    let loyer = document.getElementById("loyer").value;
+
+    if(nom === "") return;
+
+    let tbody = document.querySelector("#tableClients tbody");
+
+    let row = tbody.insertRow();
+
+    row.insertCell(0).innerHTML = nom;
+    row.insertCell(1).innerHTML = tel;
+    row.insertCell(2).innerHTML = loyer;
+
+    for(let i=0;i<12;i++){
+
+        let cell = row.insertCell(i+3);
+
+        cell.innerHTML =
+        '<input type="checkbox" onchange="sauvegarder()">';
+
+    }
+
+    let action = row.insertCell(15);
+
+    action.innerHTML =
+    '<button class="supprimer" onclick="supprimerLigne(this)">X</button>';
+
+    document.getElementById("nom").value = "";
+    document.getElementById("tel").value = "";
+    document.getElementById("loyer").value = "";
+
+    sauvegarder();
+}
+
+function supprimerLigne(btn){
+
+    btn.parentElement.parentElement.remove();
+
+    sauvegarder();
+}
+
+function sauvegarder(){
+
+    localStorage.setItem(
+        "tableLoyers",
+        document.querySelector("#tableClients tbody").innerHTML
+    );
+}
+
+function charger(){
+
+    let data = localStorage.getItem("tableLoyers");
+
+    if(data){
+        document.querySelector("#tableClients tbody").innerHTML = data;
+    }
+}
+
+window.onload = charger;
+
+function viderDonnees(){
+
+    if(confirm("Supprimer toutes les données ?")){
+
+        localStorage.removeItem("tableLoyers");
+
+        document.querySelector("#tableClients tbody").innerHTML = "";
+
+    }
+}
+
+
+function exportPDF() {
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF("landscape", "mm", "a4");
+
+    doc.setFontSize(18);
+    doc.text("GESTION DES LOYERS", 14, 15);
+
+    doc.setFontSize(10);
+    doc.text("Date : " + new Date().toLocaleDateString(), 14, 22);
+
+    let body = [];
+
+    let lignes = document.querySelectorAll("#tableClients tbody tr");
+
+    lignes.forEach(ligne => {
+
+        let cellules = ligne.querySelectorAll("td");
+
+        let data = [];
+
+        data.push(cellules[0].innerText);
+        data.push(cellules[1].innerText);
+        data.push(cellules[2].innerText + " FCFA");
+
+        for (let i = 3; i <= 14; i++) {
+
+            let check = cellules[i].querySelector("input");
+
+            data.push(check.checked ? "✔" : "✘");
+
+        }
+
+        body.push(data);
+
+    });
+
+    doc.autoTable({
+
+        head: [[
+            "Client",
+            "Téléphone",
+            "Loyer",
+            "Jan",
+            "Fév",
+            "Mar",
+            "Avr",
+            "Mai",
+            "Juin",
+            "Juil",
+            "Août",
+            "Sept",
+            "Oct",
+            "Nov",
+            "Déc"
+        ]],
+
+        body: body,
+
+        startY: 30,
+
+        styles: {
+            fontSize: 8,
+            halign: "center"
+        },
+
+        headStyles: {
+            fillColor: [0, 102, 204]
+        }
+
+    });
+
+    doc.save("Gestion_Loyers.pdf");
+
+}
+
+
+
+</script>
+
+</body>
+</html>
