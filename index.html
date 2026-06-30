@@ -7,7 +7,6 @@
 <title>Gestion Immobilière</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
 <style>
 body{
@@ -190,82 +189,52 @@ function viderDonnees(){
 }
 
 
-function exportPDF() {
+function exportPDF(){
 
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF("landscape", "mm", "a4");
 
-    doc.setFontSize(18);
-    doc.text("GESTION DES LOYERS", 14, 15);
+    const doc = new jsPDF("landscape");
 
-    doc.setFontSize(10);
-    doc.text("Date : " + new Date().toLocaleDateString(), 14, 22);
-
-    let body = [];
+    doc.setFontSize(14);
+    doc.text("Rapport Gestion des Loyers",10,10);
 
     let lignes = document.querySelectorAll("#tableClients tbody tr");
 
-    lignes.forEach(ligne => {
+    let y = 20;
+
+    lignes.forEach((ligne,index)=>{
 
         let cellules = ligne.querySelectorAll("td");
 
-        let data = [];
+        let texte =
+        cellules[0].innerText + " | " +
+        cellules[1].innerText + " | " +
+        cellules[2].innerText + " FCFA | ";
 
-        data.push(cellules[0].innerText);
-        data.push(cellules[1].innerText);
-        data.push(cellules[2].innerText + " FCFA");
+        for(let i=3;i<=14;i++){
 
-        for (let i = 3; i <= 14; i++) {
+            let checkbox =
+            cellules[i].querySelector("input");
 
-            let check = cellules[i].querySelector("input");
-
-            data.push(check.checked ? "✔" : "✘");
+            texte += checkbox.checked ? "P " : "NP ";
 
         }
 
-        body.push(data);
+        doc.text(texte,10,y);
 
-    });
+        y += 10;
 
-    doc.autoTable({
+        if(y > 190){
 
-        head: [[
-            "Client",
-            "Téléphone",
-            "Loyer",
-            "Jan",
-            "Fév",
-            "Mar",
-            "Avr",
-            "Mai",
-            "Juin",
-            "Juil",
-            "Août",
-            "Sept",
-            "Oct",
-            "Nov",
-            "Déc"
-        ]],
+            doc.addPage();
 
-        body: body,
-
-        startY: 30,
-
-        styles: {
-            fontSize: 8,
-            halign: "center"
-        },
-
-        headStyles: {
-            fillColor: [0, 102, 204]
+            y = 20;
         }
 
     });
 
-    doc.save("Gestion_Loyers.pdf");
-
+    doc.save("gestion_loyers.pdf");
 }
-
 
 
 </script>
