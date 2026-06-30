@@ -189,51 +189,99 @@ function viderDonnees(){
 }
 
 
+
+
+
+
+
 function exportPDF(){
 
     const { jsPDF } = window.jspdf;
+    const doc = new jsPDF("landscape","mm","a4");
 
-    const doc = new jsPDF("landscape");
+    doc.setFontSize(16);
+    doc.text("Rapport Gestion des Loyers",14,15);
 
-    doc.setFontSize(14);
-    doc.text("Rapport Gestion des Loyers",10,10);
+    doc.setFontSize(10);
+    doc.text("Date : " + new Date().toLocaleDateString(),14,22);
+
+    const mois = [
+        "Jan","Fév","Mar","Avr","Mai","Juin",
+        "Juil","Août","Sept","Oct","Nov","Déc"
+    ];
 
     let lignes = document.querySelectorAll("#tableClients tbody tr");
 
-    let y = 20;
+    let y = 35;
 
     lignes.forEach((ligne,index)=>{
 
         let cellules = ligne.querySelectorAll("td");
 
-        let texte =
-        cellules[0].innerText + " | " +
-        cellules[1].innerText + " | " +
-        cellules[2].innerText + " FCFA | ";
+        // Informations du client
+        doc.setFont(undefined,"bold");
+        doc.text(
+            "Client : " + cellules[0].innerText +
+            "   |   Téléphone : " + cellules[1].innerText +
+            "   |   Loyer : " + cellules[2].innerText + " FCFA",
+            10,
+            y
+        );
+
+        y += 8;
+
+        // Paiement des mois
+        doc.setFont(undefined,"normal");
+
+        let texteMois = "";
 
         for(let i=3;i<=14;i++){
 
-            let checkbox =
-            cellules[i].querySelector("input");
+            let checkbox = cellules[i].querySelector("input");
 
-            texte += checkbox.checked ? "P " : "NP ";
+            texteMois +=
+                mois[i-3] +
+                " : " +
+                (checkbox.checked ? "Payé" : "Non payé");
+
+            // Retour à la ligne après 4 mois
+            if((i-2)%4===0){
+
+                doc.text(texteMois,15,y);
+                texteMois="";
+                y+=7;
+
+            }else{
+
+                texteMois+="      ";
+
+            }
 
         }
 
-        doc.text(texte,10,y);
+        if(texteMois!=""){
+            doc.text(texteMois,15,y);
+            y+=7;
+        }
 
-        y += 10;
+        // Ligne de séparation
+        doc.line(10,y,285,y);
 
-        if(y > 190){
+        y += 8;
+
+        // Nouvelle page si nécessaire
+        if(y>185){
 
             doc.addPage();
 
-            y = 20;
+            y=20;
+
         }
 
     });
 
-    doc.save("gestion_loyers.pdf");
+    doc.save("Gestion_Loyers.pdf");
+
 }
 
 
